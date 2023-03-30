@@ -10,7 +10,7 @@ using namespace std;
 int books_available = 100;
 
 // Mutex for locking
-mutex mut;
+mutex mtx;
 
 // Conditional variable for the allocating threads to wait upon
 condition_variable checkout_ready;
@@ -23,7 +23,10 @@ condition_variable checkout_ready;
 */
 void books_checkout(int quantity)
 {
-
+    unique_lock<mutex> ul(mtx);
+    checkout_ready.wait(ul, [&]() { return quantity <= books_available; });
+    books_available -= quantity;
+    ul.unlock();
 }
 
 /* TODO:
@@ -34,7 +37,10 @@ void books_checkout(int quantity)
  */
 void books_checkin(int quantity)
 {
-
+    unique_lock<mutex> ul(mtx);
+    books_available += quantity;
+    ul.unlock();
+    checkout_ready.notify_one();
 }
 
 /**
@@ -61,8 +67,13 @@ int main()
     thread *student_threads = new thread[6];
 
     /*TODO: Create the six student threads that will use the function (manager) for a respective number of books (cart[i])*/
-
+    for(size_t i = 0; i < 6; ++i) {
+        student_threads[i] = thread(manager, i, cart[i]);
+    }
     /*TODO: Wait for all the six threads*/
+    for(size_t i = 0; i < 6; ++i) {
+        student_threads[i].join();
+    }
 
     delete[] student_threads;
     return 0;
