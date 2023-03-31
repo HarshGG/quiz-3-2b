@@ -40,7 +40,7 @@ void books_checkin(int quantity)
     unique_lock<mutex> ul(mtx);
     books_available += quantity;
     ul.unlock();
-    checkout_ready.notify_one();
+    checkout_ready.notify_all();
 }
 
 /**
@@ -52,10 +52,10 @@ void books_checkin(int quantity)
 void manager(int threadId, int quantity)
 {
     books_checkout(quantity);
-    cout << "Student " << threadId << " checked out " << quantity << " books.\n";
+    cout << "Student " << threadId << " checked out " << quantity << " books.\n" << std::flush;
     sleep(2); // keep the books for some time
     books_checkin(quantity);
-    cout << "Student " << threadId << " checked in " << quantity << " books.\n";
+    cout << "Student " << threadId << " checked in " << quantity << " books.\n" << std::flush;
 }
 
 int main()
